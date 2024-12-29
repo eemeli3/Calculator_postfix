@@ -1,0 +1,360 @@
+//infixToPostfix.h
+//Eemeli Koivu 29.12.2024
+
+#pragma once
+#include <iostream>
+#include <string>
+#include <math.h>
+#include "miscellaneous.h"
+
+
+struct node {
+	std::string data;
+	node* next;
+};
+
+
+class linkedList {
+private:
+	node* head;
+
+public:
+	linkedList() : head(NULL) {}
+
+	void insertFirstMember(std::string value) {// insert element as first member
+		node* newNode = new node();
+		newNode->data = value;
+		newNode->next = head;
+		head = newNode;
+	}
+
+	void insertLastMember(std::string value) {// insert element as last member
+		if (!head) {// the list is empty
+			insertFirstMember(value);
+			return;
+		}
+		node* newNode = new node();
+		newNode->data = value;
+		newNode->next = NULL;
+		node* temp = head;
+		while (1) {// find last member
+			if (!temp->next) {
+				break;
+			}
+			else {
+				temp = temp->next;
+			}
+		}
+		temp->next = newNode;
+		return;
+	}
+
+	void deleteFirstMember() {// delete first member
+		if (!head) {// the list is empty
+			return;
+		}
+		node* temp = head;
+		head = head->next;
+		delete temp;
+	}
+
+	void deleteMember(int index) {// delete any member in list
+		if (!head) { return; }// list is empty
+		if (!head->next) {// there is only one member in list
+			if (index > 0) {// index is higher than list length
+				return;
+			}
+			deleteFirstMember();
+			return;
+		}
+		if (!(head->next)->next) {// there are only two members in the list
+			if (index > 1) {// index is higher than list length
+				return;
+			}
+			if (index == 0) {// delete first member
+				deleteFirstMember();
+				return;
+			}
+			if (index == 1) {// delete second member
+				delete head->next;
+				head->next = NULL;
+				return;
+			}
+		}
+		if (index == 0) {// delete first member
+			deleteFirstMember();
+			return;
+		}
+		node* temp1 = head;
+		for (int i = 0; i < index - 1; i++) {// find desired member in the list
+			temp1 = temp1->next;
+		}
+		node* temp2 = temp1->next;
+		temp1->next = (temp1->next)->next;
+		delete temp2;
+		return;
+	}
+
+	void clear() { // delete all elements in the list
+		while (1) {
+			if (!head) {//the list is empty
+				return;
+			}
+			else {
+				deleteFirstMember();
+			}
+		}
+	}
+
+	std::string getFirstMemberData() {// get first member data
+		if (!head) {// list is empty
+			return "";
+		}
+		return head->data;
+	}
+
+	std::string getMemberData(int index) {// get member data for any member in list
+		if (!head) {// list is empty
+			return "";
+		}
+		node* temp = head;
+		for (int i = 0; i < index; i++) {// find desired member
+			if (!temp->next) {
+				return "";
+			}
+			temp = temp->next;
+		}
+		return temp->data;
+	}
+
+	void changeMemberData(std::string input, int index) { // change member data for any member in list
+		if (!head) {// list is empty
+			return;
+		}
+		node* temp = head;
+		for (int i = 0; i < index; i++) {// find desired member
+			if (!temp->next) {
+				return;
+			}
+			temp = temp->next;
+		}
+		temp->data = input;
+		return;
+	}
+
+	void display() {// display elements in list
+		if (!head) {//the list is empty
+			std::cout << std::endl;
+			return;
+		}
+		node* temp = head;
+		while (1) {
+			std::cout << temp->data << " ";
+			if (!temp->next) {
+				break;
+			}
+			temp = temp->next;
+		}
+		std::cout << std::endl;
+		return;
+	}
+};
+
+
+void popStack(linkedList* stack, linkedList* postfix, int precedence) {// pop elements in stack with higher precedence
+	while (1) {
+		std::string element = stack->getFirstMemberData();
+		if (element == "") { return; }// stack is empty
+		if (element == "(") { return; }
+
+		int elementPrecedence = 0;
+		if (element == "*" || element == "/") { elementPrecedence = 1; }
+		else if (element == "^") { elementPrecedence = 2; }
+
+		if (elementPrecedence >= precedence) {
+			postfix->insertLastMember(stack->getFirstMemberData());
+			stack->deleteFirstMember();
+		}
+		else { return; }
+	}
+}
+
+
+bool isOperator(char ch) {// check ch is an operator
+	char operators[5] = { '+','-','*','/','^' };
+	for (char op : operators) {
+		if (op == ch) { return 1; }
+	}
+	return 0;
+}
+
+
+bool checkInput(std::string infix) {// check the input string is allowed
+	int flag = 0;
+	for (char ch : infix) {// check all paranthesis are in pairs
+		if (!(isOperator(ch) || isdigit(ch) || ch == '.' || ch == '(' || ch == ')')) { return 0; }// check input has alloweed charackters
+		switch (ch) {
+		case ('('):
+			flag++;
+			break;
+		case(')'):
+			flag--;
+			break;
+		}
+		if (flag < 0) { return 0; }
+	}
+	if (flag > 0) { return 0; }
+
+	for (int i = 0; i < infix.length() - 1; i++) {
+		if (infix[i] == '(' && (infix[i + 1] == ')' || isOperator(infix[i + 1]))) { return 0; }// check there are no empty paranthesis or expressions of the form "(*"
+		if (isOperator(infix[i]) && infix[i + 1] == ')') { return 0; }// check there are no expressions of the form "*)"
+		if (isOperator(infix[i]) && isOperator(infix[i + 1])) { return 0; }// check there are no expressions of the form "*/"
+	}
+
+	if (isOperator(infix[0]) || isOperator(infix[infix.length() - 1])) { return 0; }// check the first and last characters are not operators
+
+	return 1;
+}
+
+
+linkedList infixToPostfixConversion(std::string infix) {// convert infix expression to postfix form
+	linkedList postfix;
+	linkedList stack;
+
+	while (infix.size() > 0) {// iterate over elements in input string
+		if (isdigit(infix[0]) || infix[0] == '.') {//element is part of a number
+			int numberOfPoints = 0;
+			int i = 0;
+			while (infix[i]) {// find where the number ends
+				if (infix[i] == '.') {
+					numberOfPoints++;
+					if (numberOfPoints == 2) {// the infix expression contains a mistake
+						postfix.clear();
+						stack.clear();
+						return postfix;
+					}
+				}
+				if (!(isdigit(infix[i]) || infix[i] == '.')) { break; }// The element is not part of a number. The number ends here.
+				else { i++; }
+			}
+
+			if (infix.substr(0, i) == ".") {// the element is a point but it is not part of a number
+				postfix.clear();
+				stack.clear();
+				return postfix;
+			}
+			postfix.insertLastMember(infix.substr(0, i));
+			infix = infix.substr(i, infix.size());
+		}
+
+		else if (infix[0] == '(') {// element is "("
+			stack.insertFirstMember("(");
+			infix = infix.substr(1, infix.size());
+		}
+
+		else if (infix[0] == ')') {// element is ")"
+			while (1) {
+				if (stack.getFirstMemberData() == "(") {
+					stack.deleteFirstMember();
+					break;
+				}
+				else {
+					postfix.insertLastMember(stack.getFirstMemberData());
+					stack.deleteFirstMember();
+				}
+			}
+			infix = infix.substr(1, infix.size());
+		}
+
+		else if (infix[0] == '^') {// element is "^"
+			if (!(stack.getFirstMemberData() == "(" || stack.getFirstMemberData() == "")) { popStack(&stack, &postfix, 2); }
+			stack.insertFirstMember(infix.substr(0, 1));
+			infix = infix.substr(1, infix.size());
+		}
+
+		else if (infix[0] == '*' || infix[0] == '/') {// element is "*" or "/"
+			if (stack.getFirstMemberData() == "(" || stack.getFirstMemberData() == "") { popStack(&stack, &postfix, 1); }
+			stack.insertFirstMember(infix.substr(0, 1));
+			infix = infix.substr(1, infix.size());
+		}
+
+		else if (infix[0] == '+' || infix[0] == '-') {// element is "+" or "-"
+			if (stack.getFirstMemberData() == "(" || stack.getFirstMemberData() == "") { popStack(&stack, &postfix, 0); }
+			stack.insertFirstMember(infix.substr(0, 1));
+			infix = infix.substr(1, infix.size());
+		}
+	}
+
+	popStack(&stack, &postfix, 0);
+	stack.clear();
+	return postfix;
+}
+
+
+float calculate(linkedList postfix) {// calculate the value from postfix expression
+	if (postfix.getFirstMemberData() == "") {// infix was not a valid expression
+		return NAN;
+	}
+
+	std::string operators[5] = { "+","-","*","/","^" };
+	while (1) {// Loop until the entire list has been evaluated.
+		bool flag = 0;
+		int i = 0;
+		while (1) {// Iterate over postfix list. Break when an operator has been found.
+			if (postfix.getMemberData(i) == "") { return NAN; }// the postfix string is not a valid expression
+
+			int j = 0;
+			while (j < 5) {// check whether element in postfix is an operator
+				if (postfix.getMemberData(i) == operators[j]) {
+					flag = 1;
+					break;
+				}
+				j++;
+			}
+
+			if (flag) {// an operator has been found
+				if (!stof(postfix.getMemberData(i - 1)) || !stof(postfix.getMemberData(i - 2))) {// Postfix is not a valid mathematical expression
+					return NAN;
+				}
+				switch (j) {
+				case (0):// operator is "+"
+					postfix.changeMemberData(std::to_string(stof(postfix.getMemberData(i - 2)) + stof(postfix.getMemberData(i - 1))), i);
+					break;
+				case (1):// operator is "-"
+					postfix.changeMemberData(std::to_string(stof(postfix.getMemberData(i - 2)) - stof(postfix.getMemberData(i - 1))), i);
+					break;
+				case (2):// operator is "*"
+					postfix.changeMemberData(std::to_string(stof(postfix.getMemberData(i - 2)) * stof(postfix.getMemberData(i - 1))), i);
+					break;
+				case (3):// operator is "/"
+					if (stof(postfix.getMemberData(i - 1)) == 0) { return NAN; }// division by zero
+					postfix.changeMemberData(std::to_string(stof(postfix.getMemberData(i - 2)) / stof(postfix.getMemberData(i - 1))), i);
+					break;
+				case (4):// operator is "^"
+					postfix.changeMemberData(std::to_string(pow(stof(postfix.getMemberData(i - 2)), stof(postfix.getMemberData(i - 1)))), i);
+					break;
+				}
+				postfix.deleteMember(i - 2);
+				postfix.deleteMember(i - 2);
+				break;
+			}
+
+			i++;
+		}
+		if (postfix.getMemberData(1) == "") {// the expression has been evaluated
+			break;
+		}
+	}
+	if (!stof(postfix.getFirstMemberData())) { return NAN; }// the result is not a number. Invalid expression
+
+	return stof(postfix.getFirstMemberData());
+}
+
+
+float evalExpr(std::string expr) {
+	removeSpaces(&expr);// remove whitespaces
+	if (!checkInput(expr)) { return NAN; }// check the input is correct
+	linkedList postfix = infixToPostfixConversion(expr);// convert input to postfix form
+	float result = calculate(postfix);// calculate value
+	return result;
+}
