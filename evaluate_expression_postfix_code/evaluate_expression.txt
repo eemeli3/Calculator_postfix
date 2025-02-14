@@ -1,0 +1,25 @@
+//evaluate_expression.cpp
+//Eemeli Koivu 29.12.2024
+
+#include <iostream>
+#include <string>
+#include <math.h>
+#include <windows.h>
+#include "infixToPostfix.h"
+
+using namespace std;
+
+int main()
+{
+
+	string expr;
+	while (1) {
+		cout << "Give a mathematical expression. Enter \"n\" to stop.\nInput: ";
+		cin >> expr;
+		if (expr == "n") { break; }
+		float result = evalExpr(expr);
+		if (isnan(result)) { cout << "The input is not an allowed expression.\n\n"; }
+		else { cout << "Result: " << result << "\n\n"; }
+	}
+	return 0;
+}
